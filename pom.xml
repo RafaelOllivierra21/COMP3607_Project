@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>edu.uwi.comp3607</groupId>
+  <groupId>comp3607</groupId>
   <artifactId>bluej-telemetry</artifactId>
   <version>1.0</version>
   <packaging>jar</packaging>
@@ -51,8 +51,7 @@
         <configuration>
           <archive>
             <manifest>
-              <!-- BlueJ reads this line to find the plugin's main class -->
-              <mainClass>edu.uwi.comp3607.telemetry.TelemetryExtension</mainClass>
+              <mainClass>comp3607.telemetry.TelemetryExtension</mainClass>
             </manifest>
           </archive>
         </configuration>
