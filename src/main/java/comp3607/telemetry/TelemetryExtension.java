@@ -13,6 +13,7 @@ public class TelemetryExtension extends Extension implements PackageListener {
 
     private final EventBuffer buffer = new EventBuffer();
     private Thread classSampler;
+    private Thread editorSampler;
 
     public EventBuffer getBuffer() {
         return buffer;
@@ -30,6 +31,11 @@ public class TelemetryExtension extends Extension implements PackageListener {
 
         bluej.addCompileListener(new CompileMonitor(buffer));
         bluej.addInvocationFinishedListener(new RunMonitor(buffer));
+
+        EditorMonitor editorMonitor = new EditorMonitor(bluej, buffer);
+        editorSampler = new Thread(editorMonitor, "telemetry-editor-sampler");
+        editorSampler.setDaemon(true);
+        editorSampler.start();
         System.out.println("[Telemetry] plugin started");
     }
 
@@ -60,6 +66,9 @@ public class TelemetryExtension extends Extension implements PackageListener {
     public void terminate() {
         if (classSampler != null) {
             classSampler.interrupt();
+        }
+        if (editorSampler != null) {
+            editorSampler.interrupt();
         }
         System.out.println("[Telemetry] plugin terminating");
     }
