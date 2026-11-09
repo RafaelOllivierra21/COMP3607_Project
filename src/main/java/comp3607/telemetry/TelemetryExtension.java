@@ -11,18 +11,33 @@ import java.net.URL;
 
 public class TelemetryExtension extends Extension implements PackageListener {
 
-    // BlueJ calls this once when it loads the plugin
+    private final EventBuffer buffer = new EventBuffer();
+    private Thread classSampler;
+
+    public EventBuffer getBuffer() {
+        return buffer;
+    }
+
     @Override
     public void startup(BlueJ bluej) {
         bluej.addPackageListener(this);
+
+        ClassMonitor classMonitor = new ClassMonitor(bluej, buffer);
+        bluej.addClassListener(classMonitor);
+        classSampler = new Thread(classMonitor, "telemetry-class-sampler");
+        classSampler.setDaemon(true);
+        classSampler.start();
+
+        bluej.addCompileListener(new CompileMonitor(buffer));
+        bluej.addInvocationFinishedListener(new RunMonitor(buffer));
         System.out.println("[Telemetry] plugin started");
     }
 
-    // BlueJ calls this every time a project (package) is opened
     @Override
     public void packageOpened(PackageEvent event) {
         try {
             String name = event.getPackage().getProject().getName();
+            buffer.add(TelemetryEvent.PROJECT_OPEN, name);
             System.out.println("[Telemetry] project opened: " + name);
         } catch (ProjectNotOpenException e) {
             System.out.println("[Telemetry] project closed before it could be read");
@@ -31,12 +46,21 @@ public class TelemetryExtension extends Extension implements PackageListener {
 
     @Override
     public void packageClosing(PackageEvent event) {
+        String name;
+        try {
+            name = event.getPackage().getProject().getName();
+        } catch (ProjectNotOpenException e) {
+            name = "unknown";
+        }
+        buffer.add(TelemetryEvent.PROJECT_CLOSE, name);
         System.out.println("[Telemetry] project closing");
     }
 
-    // BlueJ calls this when it shuts down
     @Override
     public void terminate() {
+        if (classSampler != null) {
+            classSampler.interrupt();
+        }
         System.out.println("[Telemetry] plugin terminating");
     }
 
