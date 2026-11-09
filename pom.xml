@@ -14,12 +14,13 @@
   </properties>
 
   <dependencies>
-    <!-- BlueJ's own jar. "provided" = compile against it but don't pack it, BlueJ already has it -->
+    <!-- BlueJ's own jar, loaded from lib/ -->
     <dependency>
-      <groupId>org.bluej</groupId>
-      <artifactId>bluej</artifactId>
-      <version>6.0.1</version>
-      <scope>provided</scope>
+        <groupId>org.bluej</groupId>
+        <artifactId>bluej</artifactId>
+        <version>6.0.1</version>
+        <scope>system</scope>
+        <systemPath>${project.basedir}/lib/bluej.jar</systemPath>
     </dependency>
     <!-- JavaFX, same version BlueJ uses. Needed later for the Tools menu item -->
     <dependency>
