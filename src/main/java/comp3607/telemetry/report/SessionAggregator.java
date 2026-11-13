@@ -2,16 +2,15 @@ package comp3607.telemetry.report;
 
 import comp3607.telemetry.TelemetryEvent;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 // works out all the session totals from the list of events in the buffer
 public class SessionAggregator {
 
     // 2 minutes with no edits counts as idle
     public static final long IDLE_LIMIT = 2 * 60 * 1000;
-
-    // TODO change to TelemetryEvent.METHOD_DEFINED once Jon-Paul pushes it
-    private static final String METHOD_DEFINED = "METHOD_DEFINED";
 
     // endTime is when the export happens, or when BlueJ closes for the final report
     public SessionSummary summarise(List<TelemetryEvent> events, long endTime) {
@@ -128,11 +127,19 @@ public class SessionAggregator {
     }
 
     // class creations and method defs go in the timeline in the order they happened
+    // the monitor reports every method again after each compile so a method only goes in the first time
     private void buildTimeline(List<TelemetryEvent> events, SessionSummary summary) {
+        Set<String> methodsSeen = new HashSet<>();
+
         for (TelemetryEvent event : events) {
             String type = event.getType();
-            if (TelemetryEvent.CLASS_CREATE.equals(type) || METHOD_DEFINED.equals(type)) {
+            if (TelemetryEvent.CLASS_CREATE.equals(type)) {
                 summary.addTimelineEvent(event);
+            } else if (TelemetryEvent.METHOD_DEFINED.equals(type)) {
+                if (!methodsSeen.contains(event.getDetail())) {
+                    methodsSeen.add(event.getDetail());
+                    summary.addTimelineEvent(event);
+                }
             }
         }
     }
