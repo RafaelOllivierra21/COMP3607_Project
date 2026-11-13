@@ -5,15 +5,34 @@ import bluej.extensions2.Extension;
 import bluej.extensions2.ProjectNotOpenException;
 import bluej.extensions2.event.PackageEvent;
 import bluej.extensions2.event.PackageListener;
+import comp3607.telemetry.report.AutosaveTimer;
+import comp3607.telemetry.report.ExportCommand;
+import comp3607.telemetry.report.ExportRunner;
+import comp3607.telemetry.report.Exporter;
+import comp3607.telemetry.report.JsonExporter;
+import comp3607.telemetry.report.PdfExporter;
+import comp3607.telemetry.report.TelemetryMenu;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TelemetryExtension extends Extension implements PackageListener {
+
+    // how long bluej waits for the final report when it closes
+    private static final long FINAL_REPORT_WAIT_MS = 10000;
 
     private final EventBuffer buffer = new EventBuffer();
     private Thread classSampler;
     private Thread editorSampler;
+
+    // part 2, exporting the json and pdf
+    private File folder;
+    private List<Exporter> exporters;
+    private ExportRunner runner;
+    private Thread autosaver;
 
     public EventBuffer getBuffer() {
         return buffer;
@@ -36,6 +55,33 @@ public class TelemetryExtension extends Extension implements PackageListener {
         editorSampler = new Thread(editorMonitor, "telemetry-editor-sampler");
         editorSampler.setDaemon(true);
         editorSampler.start();
+
+        // part 2, reports get saved in a BlueJTelemetry folder in the users home folder
+        folder = new File(System.getProperty("user.home"), "BlueJTelemetry");
+
+        JsonExporter json = new JsonExporter();
+        PdfExporter pdf = new PdfExporter();
+
+        exporters = new ArrayList<>();
+        exporters.add(json);
+        exporters.add(pdf);
+
+        // autosave only needs the json
+        List<Exporter> autosaveExporters = new ArrayList<>();
+        autosaveExporters.add(json);
+
+        // the one background thread that writes every file
+        runner = new ExportRunner();
+        runner.start();
+
+        // tools menu item for a snapshot at any time
+        bluej.setMenuGenerator(new TelemetryMenu(buffer, runner, exporters, folder));
+
+        // json autosave every 60 seconds in case bluej crashes
+        autosaver = new Thread(new AutosaveTimer(buffer, runner, autosaveExporters, folder), "telemetry-autosave");
+        autosaver.setDaemon(true);
+        autosaver.start();
+
         System.out.println("[Telemetry] plugin started");
     }
 
@@ -70,6 +116,16 @@ public class TelemetryExtension extends Extension implements PackageListener {
         if (editorSampler != null) {
             editorSampler.interrupt();
         }
+
+        // part 2, stop autosaving then write the final report before bluej closes
+        if (autosaver != null) {
+            autosaver.interrupt();
+        }
+        if (runner != null) {
+            String name = ExportCommand.nameWithTime("final");
+            runner.finish(new ExportCommand(buffer, exporters, folder, name), FINAL_REPORT_WAIT_MS);
+        }
+
         System.out.println("[Telemetry] plugin terminating");
     }
 
