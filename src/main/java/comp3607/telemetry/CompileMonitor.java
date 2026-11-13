@@ -15,6 +15,9 @@ public class CompileMonitor implements CompileListener {
 
     @Override
     public void compileStarted(CompileEvent event) {
+        if (event.isUserGeneratedCompilation()) {
+            buffer.add(TelemetryEvent.COMPILE_START, fileNames(event));
+        }
     }
 
     @Override
