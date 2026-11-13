@@ -1,6 +1,7 @@
 package comp3607.telemetry;
 
 import bluej.extensions2.BClass;
+import bluej.extensions2.BMethod;
 import bluej.extensions2.BPackage;
 import bluej.extensions2.BProject;
 import bluej.extensions2.BlueJ;
@@ -97,6 +98,18 @@ public class ClassMonitor implements ClassListener, Runnable {
 
     @Override
     public void classStateChanged(ClassEvent event) {
+        if (!event.isClassCompiled()) {
+            return;
+        }
+        try {
+            BClass bClass = event.getBClass();
+            for (BMethod method : bClass.getDeclaredMethods()) {
+                buffer.add(TelemetryEvent.METHOD_DEFINED,
+                        bClass.getName() + "." + method.getName());
+            }
+        } catch (Exception e) {
+            System.out.println("[Telemetry] method read skipped: " + e);
+        }
     }
 
     private String projectName(ClassEvent event) {
