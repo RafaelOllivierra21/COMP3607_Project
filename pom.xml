@@ -103,6 +103,37 @@
           </execution>
         </executions>
       </plugin>
+      <!-- JaCoCo Code Coverage Plugin for code coverage -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.11</version>
+        <configuration>
+          <excludes>
+            <exclude>comp3607/telemetry/TelemetryExtension.class</exclude>
+            <exclude>comp3607/telemetry/ClassMonitor.class</exclude>
+            <exclude>comp3607/telemetry/EditorMonitor*.class</exclude>
+            <exclude>comp3607/telemetry/report/TelemetryMenu*.class</exclude>
+            <exclude>comp3607/telemetry/report/ExportCommand.class</exclude>
+            <exclude>comp3607/telemetry/report/ExportRunner.class</exclude>
+            <exclude>comp3607/telemetry/report/AutosaveTimer*.class</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>
