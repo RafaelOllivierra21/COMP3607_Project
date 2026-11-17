@@ -21,26 +21,53 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-// makes the pdf report (max 2 pages) using openpdf
-// the parent class decides the order, this class just fills in each part
+/**
+ * Makes the A4 PDF report for a session using OpenPDF, kept to 2 pages at most.
+ 
+ * It is one of the concrete strategies for {@link Exporter}, and a subclass in the Template Method
+ * pattern. {@link AbstractExporter#export} decides the order of the parts, and this class draws each one:
+ 
+ * Not thread safe. It keeps the open document between steps, so only one export should use it
+ * at a time. The single export thread in {@link ExportRunner} makes sure of that.
+ */
 public class PdfExporter extends AbstractExporter {
 
+    /**
+     * Most rows shown in the timeline table, so the report stays within 2 pages.
+     * Any extra rows are left out with a note pointing to the JSON file, which has them all.
+     */
+    public static final int MAX_TIMELINE_ROWS = 18;
+
+    /** Font for the report title. */
     private static final Font TITLE_FONT = new Font(Font.HELVETICA, 18, Font.BOLD);
+
+    /** Font for the section headings. */
     private static final Font HEADING_FONT = new Font(Font.HELVETICA, 13, Font.BOLD);
+
+    /** Font for table labels and column headers. */
     private static final Font BOLD_FONT = new Font(Font.HELVETICA, 10, Font.BOLD);
+
+    /** Font for normal text and table values. */
     private static final Font TEXT_FONT = new Font(Font.HELVETICA, 10, Font.NORMAL);
 
-    // keeps the timeline short enough for the report to stay within 2 pages
-    private static final int MAX_TIMELINE_ROWS = 20;
-
+    /** PDF being built, opened in {@link #start(File)} and closed in {@link #finish()}. */
     private Document document;
+
+    /** Writer for the document, also used to draw the bar chart. */
     private PdfWriter writer;
 
+    /** @return {@code pdf} */
     @Override
     protected String getExtension() {
         return "pdf";
     }
 
+    /**
+     * Opens a new A4 document on the file and adds the title.
+     *
+     * @param file the PDF file to write, replaced if it is already there
+     * @throws IOException if the file cannot be opened for writing
+     */
     @Override
     protected void start(File file) throws IOException {
         document = new Document(PageSize.A4);
@@ -55,7 +82,13 @@ public class PdfExporter extends AbstractExporter {
         add(new Paragraph("BlueJ Telemetry Report", TITLE_FONT));
     }
 
-    // table 1 from the scope, active vs idle time with the compile success rate
+    /**
+     * Adds the student ID, the session times and table 1: session length, active and idle time,
+     * edits, edits per active minute, compile attempts, successful compiles and the success rate.
+     *
+     * @param summary the session totals
+     * @throws IOException if OpenPDF cannot add to the document
+     */
     @Override
     protected void writeSessionInfo(SessionSummary summary) throws IOException {
         add(new Paragraph("Student ID: " + summary.getStudentId(), TEXT_FONT));
@@ -68,13 +101,21 @@ public class PdfExporter extends AbstractExporter {
         addRow(table, "Session length", formatDuration(summary.getSessionDuration()));
         addRow(table, "Active coding time", formatDuration(summary.getActiveTime()));
         addRow(table, "Idle time", formatDuration(summary.getIdleTime()));
+        addRow(table, "Edits", String.valueOf(summary.getEditCount()));
+        addRow(table, "Edits per active minute", String.format("%.1f", summary.getEditsPerMinute()));
         addRow(table, "Compile attempts", String.valueOf(summary.getTotalCompilations()));
         addRow(table, "Successful compiles", String.valueOf(summary.getSuccessfulCompilations()));
         addRow(table, "Compile success rate", String.format("%.1f", summary.getCompileSuccessRate()) + "%");
         add(table);
     }
 
-    // table 2 and the bar chart from the scope, how many of each error code happened
+    /**
+     * Adds table 2, each error code with its label and count, and a bar chart of the counts
+     * right under it. If there were no errors it just says so.
+     *
+     * @param summary the session totals
+     * @throws IOException if OpenPDF cannot add to the document
+     */
     @Override
     protected void writeCompileInfo(SessionSummary summary) throws IOException {
         add(heading("Errors by code"));
@@ -101,8 +142,14 @@ public class PdfExporter extends AbstractExporter {
         add(makeErrorChart(summary));
     }
 
-    // table 3 from the scope, class creations and method defs in the order they happened
-    // this is a hook in the parent, only the pdf needs it
+    /**
+     * Adds table 3, class creations and method definitions in the order they happened.
+     * Only the first {@link #MAX_TIMELINE_ROWS} rows are shown, then a note says how many
+     * more are in the JSON file. This is a hook in the parent, only the PDF uses it.
+     *
+     * @param summary the session totals
+     * @throws IOException if OpenPDF cannot add to the document
+     */
     @Override
     protected void writeTimeline(SessionSummary summary) throws IOException {
         add(heading("Class and method timeline"));
@@ -139,6 +186,7 @@ public class PdfExporter extends AbstractExporter {
         }
     }
 
+    /** Closes the document, which writes the finished PDF to the file. */
     @Override
     protected void finish() {
         document.close();
