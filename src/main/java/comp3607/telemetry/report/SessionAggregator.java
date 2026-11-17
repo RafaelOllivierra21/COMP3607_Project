@@ -8,6 +8,10 @@ import java.util.Set;
 
 /**
  * Works out all the session totals from the list of events in the buffer.
+ 
+ * {@link ExportCommand} calls {@link #summarise(List, long)} with a copy of the buffer's events
+ * every time a report is made, and the exporters write out the {@link SessionSummary} it returns.
+ * All the maths for the reports is in this one class, so it can be tested without BlueJ running.
  */
 public class SessionAggregator {
 
@@ -25,10 +29,10 @@ public class SessionAggregator {
      * @param endTime when the session ends, which is the export time or when BlueJ closes
      * @return a new summary with every total filled in
      */
-
     public SessionSummary summarise(List<TelemetryEvent> events, long endTime) {
         SessionSummary summary = new SessionSummary();
         summary.setEvents(events);
+        summary.setProjectName(findProjectName(events));
 
         long start = findStart(events, endTime);
         summary.setSessionStart(start);
@@ -41,6 +45,21 @@ public class SessionAggregator {
         buildTimeline(events, summary);
 
         return summary;
+    }
+
+    /**
+     * Finds the name of the last project that was opened. It uses the last one, not the first,
+     * so it matches the project the report files are saved in and named after.
+     * Gives no_project if no project was opened.
+     */
+    private String findProjectName(List<TelemetryEvent> events) {
+        String name = ReportLocation.NO_PROJECT;
+        for (TelemetryEvent event : events) {
+            if (TelemetryEvent.PROJECT_OPEN.equals(event.getType())) {
+                name = event.getDetail();
+            }
+        }
+        return name;
     }
 
     /**

@@ -9,11 +9,11 @@ import java.util.TreeMap;
 
 /**
  * Holds all the totals for one session so they are ready to be written out.
- * <p>
+ 
  * {@link SessionAggregator#summarise(List, long)} makes one of these and fills it in from the
  * buffer's events, then every {@link Exporter} reads from it. It is only a data holder, so the
  * exporters never have to work anything out themselves.
- * <p>
+
  * All times are in milliseconds. The start and end are clock times from
  * {@code System.currentTimeMillis()} and the rest are lengths of time.
  * It is not thread safe, but every export makes its own summary so it never gets shared.
@@ -26,7 +26,10 @@ public class SessionSummary {
     /** Number of milliseconds in one minute, used for the edit rate. */
     private static final long MILLIS_PER_MINUTE = 60 * 1000;
 
-    // session times
+    // session details
+
+    /** Name of the BlueJ project the session was for, or no_project if none was opened. */
+    private String projectName = ReportLocation.NO_PROJECT;
 
     /** When the session started, which is when the first project opened. */
     private long sessionStart;
@@ -94,6 +97,20 @@ public class SessionSummary {
     /** {@return the student ID placeholder, since the real ID is not known} */
     public String getStudentId() {
         return STUDENT_ID_PLACEHOLDER;
+    }
+
+    /** {@return the name of the BlueJ project the session was for, or no_project if none was opened} */
+    public String getProjectName() {
+        return projectName;
+    }
+
+    /**
+     * Sets which BlueJ project the session was for.
+     *
+     * @param projectName the project's name as BlueJ shows it, eg TelemetryTest
+     */
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
     }
 
     /** {@return when the session started, as a clock time in milliseconds} */

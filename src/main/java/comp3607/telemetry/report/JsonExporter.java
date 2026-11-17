@@ -14,8 +14,12 @@ import java.nio.file.Files;
 
 /**
  * Writes a session out as a pretty printed JSON file using Gson.
-
- * The top level keys come out in this order: student_id, session_start, session_end,
+ 
+ * It is one of the concrete strategies for {@link Exporter}, and a subclass in the Template Method
+ * pattern. {@link AbstractExporter#export} decides the order of the parts, and this class fills in
+ * each part by adding keys to one JSON object, then saves it all in {@link #finish()}.
+ 
+ * The top level keys come out in this order: student_id, project_name, session_start, session_end,
  * session_duration, active_time, idle_time, edit_count, edits_per_minute, total_compilations,
  * successful_compilations, error_counts, compile_intervals, run_summary and events.
  * Times are in milliseconds.
@@ -23,7 +27,6 @@ import java.nio.file.Files;
  * Not thread safe. It keeps the file and JSON object between steps, so only one export
  * should use it at a time. The single export thread in {@link ExportRunner} makes sure of that.
  */
-
 public class JsonExporter extends AbstractExporter {
 
     /** File being written, set in {@link #start(File)}. */
@@ -32,12 +35,11 @@ public class JsonExporter extends AbstractExporter {
     /** JSON object built up bit by bit as each part runs, then saved in {@link #finish()}. */
     private JsonObject root;
 
-    /** @return {@code json} */
- 
     /** Makes a JSON exporter. One is made in {@code TelemetryExtension.startup()} and reused for every export. */
     public JsonExporter() {
     }
-    
+
+    /** @return {@code json} */
     @Override
     protected String getExtension() {
         return "json";
@@ -55,7 +57,7 @@ public class JsonExporter extends AbstractExporter {
     }
 
     /**
-     * Adds the student ID placeholder, the session times, active and idle time,
+     * Adds the student ID placeholder, the project name, the session times, active and idle time,
      * and the edit count and edits per active minute.
      *
      * @param summary the session totals
@@ -63,6 +65,7 @@ public class JsonExporter extends AbstractExporter {
     @Override
     protected void writeSessionInfo(SessionSummary summary) {
         root.addProperty("student_id", summary.getStudentId());
+        root.addProperty("project_name", summary.getProjectName());
         root.addProperty("session_start", summary.getSessionStart());
         root.addProperty("session_end", summary.getSessionEnd());
         root.addProperty("session_duration", summary.getSessionDuration());
