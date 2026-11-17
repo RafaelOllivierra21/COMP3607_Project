@@ -11,39 +11,75 @@ import javafx.scene.control.MenuItem;
 import java.io.File;
 import java.util.List;
 
-// adds "Export telemetry report" to the bluej tools menu
-// clicking it is a sender in the command pattern, it makes a command and gives it to the runner
+/**
+ * Adds "Export telemetry report" to the BlueJ Tools menu so a JSON and PDF snapshot
+ * of the session so far can be saved at any time.
+ */
 public class TelemetryMenu extends MenuGenerator implements EventHandler<ActionEvent> {
 
-    private final EventBuffer buffer;
-    private final ExportRunner runner;
-    private final List<Exporter> exporters;
-    private final File folder;
+    /** Text shown on the item in the Tools menu. */
+    public static final String MENU_TEXT = "Export telemetry report";
 
-    public TelemetryMenu(EventBuffer buffer, ExportRunner runner, List<Exporter> exporters, File folder) {
+    /** Buffer the snapshot is taken from. */
+    private final EventBuffer buffer;
+
+    /** Background runner the export command is handed to. */
+    private final ExportRunner runner;
+
+    /** Exporters used for a snapshot, JSON and PDF. */
+    private final List<Exporter> exporters;
+
+    /** Says which folder to save in and what to call the files. */
+    private final ReportLocation location;
+
+    /**
+     * Makes the menu generator. Nothing is exported until the item is clicked.
+     *
+     * @param buffer the shared buffer of recorded events
+     * @param runner the background runner that writes the files
+     * @param exporters the exporters to run for each snapshot
+     * @param location where the files go and how they are named
+     */
+    public TelemetryMenu(EventBuffer buffer, ExportRunner runner, List<Exporter> exporters, ReportLocation location) {
         this.buffer = buffer;
         this.runner = runner;
         this.exporters = exporters;
-        this.folder = folder;
+        this.location = location;
     }
 
-    // bluej can ask for the item more than once so we make a new one every time
+    /**
+     * Makes the Tools menu item. BlueJ can ask for it more than once, eg once per project
+     * window, so a new item is made every time.
+     *
+     * @param bPackage the package whose window the menu is for, not used because
+     *                 the report location already knows the open project
+     * @return a new menu item with this class handling its clicks
+     */
     @Override
     public MenuItem getToolsMenuItem(BPackage bPackage) {
-        MenuItem item = new MenuItem("Export telemetry report");
+        MenuItem item = new MenuItem(MENU_TEXT);
         item.setOnAction(this);
         return item;
     }
 
-    // runs on the bluej window thread when the item is clicked, so it only queues the job and returns
+    /**
+     * Queues a snapshot export when the item is clicked, then shows a small message saying
+     * which files are being saved and where. This runs on the BlueJ window thread, so it only
+     * queues the work and returns straight away.
+     *
+     * @param event the click event from JavaFX, not used
+     */
     @Override
     public void handle(ActionEvent event) {
-        String name = ExportCommand.nameWithTime("snapshot");
+        // read the folder and name once so the message matches the files that get written
+        File folder = location.getFolder();
+        String name = location.nameWithTime("snapshot");
         runner.submit(new ExportCommand(buffer, exporters, folder, name));
 
+        // show() instead of showAndWait() so the bluej window doesnt get blocked
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setHeaderText("Telemetry report export started");
-        alert.setContentText("A JSON and PDF snapshot is being saved to:\n" + folder.getPath());
+        alert.setContentText("Saving " + name + ".json and .pdf to:\n" + folder.getPath());
         alert.show();
     }
 }

@@ -3,20 +3,42 @@ package comp3607.telemetry.report;
 import comp3607.telemetry.EventBuffer;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
-// one export job, it takes a snapshot of the buffer, works out the totals
-// and writes every file in its list of exporters
+/**
+ * One export job in the Command pattern. When it runs it copies the events recorded so far,
+ * works out the session totals with {@link SessionAggregator}, and writes one file per
+ * {@link Exporter} into the given folder.
+ 
+ * The command only uses the {@link Exporter} interface, so it works the same way for JSON,
+ * PDF or any new format added later (Strategy).
+ */
+
 public class ExportCommand implements Command {
 
+    /** Buffer the events are copied from when the command runs. */
     private final EventBuffer buffer;
+
+    /** Exporters to run, each one writes its own file. */
     private final List<Exporter> exporters;
+
+    /** Folder the files are written to. */
     private final File folder;
+
+    /** File name without the extension, each exporter adds its own. */
     private final String name;
+
+    /** Works out the session totals from the copied events. */
     private final SessionAggregator aggregator = new SessionAggregator();
 
+    /**
+     * Makes an export job. Nothing is read or written until {@link #execute()} is called.
+     *
+     * @param buffer the shared buffer of recorded events
+     * @param exporters the exporters to run, eg JSON and PDF
+     * @param folder where to write the files
+     * @param name the file name without an extension, eg TelemetryTest_snapshot_2026-11-17_18-10-05
+     */
     public ExportCommand(EventBuffer buffer, List<Exporter> exporters, File folder, String name) {
         this.buffer = buffer;
         this.exporters = exporters;
@@ -24,6 +46,11 @@ public class ExportCommand implements Command {
         this.name = name;
     }
 
+    /**
+     * Copies the events, works out the totals with the session end set to now, and writes
+     * every file. If one exporter fails, the error is printed to the BlueJ log and the rest
+     * still run, so one bad file never stops the others or kills the export thread.
+     */
     @Override
     public void execute() {
         // getEvents gives a copy so new events can keep coming in while we export
@@ -38,11 +65,5 @@ public class ExportCommand implements Command {
                 System.out.println("[Telemetry] export failed: " + e);
             }
         }
-    }
-
-    // makes names like snapshot_2026-11-12_23-40-05 so files never overwrite each other
-    public static String nameWithTime(String prefix) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-        return prefix + "_" + format.format(new Date());
     }
 }
