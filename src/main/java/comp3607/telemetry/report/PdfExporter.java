@@ -55,6 +55,10 @@ public class PdfExporter extends AbstractExporter {
 
     /** Writer for the document, also used to draw the bar chart. */
     private PdfWriter writer;
+    
+    /** Makes a PDF exporter. One is made in {@code TelemetryExtension.startup()} and reused for every export. */
+    public PdfExporter() {
+    }
 
     /** @return {@code pdf} */
     @Override
