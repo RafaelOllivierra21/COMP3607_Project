@@ -14,6 +14,10 @@ public class SessionAggregator {
     /** A gap with no edits this long or longer counts as idle, 2 minutes in milliseconds. */
     public static final long IDLE_LIMIT = 2 * 60 * 1000;
 
+    /** Makes an aggregator. It keeps no state between calls, so one can be reused for any number of sessions. */
+    public SessionAggregator() {
+    }
+
     /**
      * Builds a summary of the session from its events. The list is only read, never changed.
      *
@@ -21,6 +25,7 @@ public class SessionAggregator {
      * @param endTime when the session ends, which is the export time or when BlueJ closes
      * @return a new summary with every total filled in
      */
+
     public SessionSummary summarise(List<TelemetryEvent> events, long endTime) {
         SessionSummary summary = new SessionSummary();
         summary.setEvents(events);

@@ -9,12 +9,15 @@ import java.util.TreeMap;
 
 /**
  * Holds all the totals for one session so they are ready to be written out.
- * 
+ * <p>
+ * {@link SessionAggregator#summarise(List, long)} makes one of these and fills it in from the
+ * buffer's events, then every {@link Exporter} reads from it. It is only a data holder, so the
+ * exporters never have to work anything out themselves.
+ * <p>
  * All times are in milliseconds. The start and end are clock times from
  * {@code System.currentTimeMillis()} and the rest are lengths of time.
- * every export makes its own summary so it never gets shared.
+ * It is not thread safe, but every export makes its own summary so it never gets shared.
  */
-
 public class SessionSummary {
 
     /** Put in place of the student ID because BlueJ does not know who the student is. */
@@ -81,57 +84,80 @@ public class SessionSummary {
     /** Every event collected in the session, kept so the JSON can list them all. */
     private List<TelemetryEvent> events = new ArrayList<>();
 
-    /** @return the student ID placeholder, since the real ID is not known */
+    /**
+     * Makes an empty summary with every total at 0 and empty lists.
+     * {@link SessionAggregator} fills it in.
+     */
+    public SessionSummary() {
+    }
+
+    /** {@return the student ID placeholder, since the real ID is not known} */
     public String getStudentId() {
         return STUDENT_ID_PLACEHOLDER;
     }
 
-    /** @return when the session started, as a clock time in milliseconds */
+    /** {@return when the session started, as a clock time in milliseconds} */
     public long getSessionStart() {
         return sessionStart;
     }
 
-    /** @param sessionStart when the session started, as a clock time in milliseconds */
+    /**
+     * Sets when the session started.
+     *
+     * @param sessionStart a clock time in milliseconds
+     */
     public void setSessionStart(long sessionStart) {
         this.sessionStart = sessionStart;
     }
 
-    /** @return when the session ended, as a clock time in milliseconds */
+    /** {@return when the session ended, as a clock time in milliseconds} */
     public long getSessionEnd() {
         return sessionEnd;
     }
 
-    /** @param sessionEnd when the session ended, as a clock time in milliseconds */
+    /**
+     * Sets when the session ended.
+     *
+     * @param sessionEnd a clock time in milliseconds
+     */
     public void setSessionEnd(long sessionEnd) {
         this.sessionEnd = sessionEnd;
     }
 
-    /** @return how long the session lasted, end minus start, in milliseconds */
+    /** {@return how long the session lasted, end minus start, in milliseconds} */
     public long getSessionDuration() {
         return sessionEnd - sessionStart;
     }
 
-    /** @return total idle time in milliseconds */
+    /** {@return the total idle time in milliseconds} */
     public long getIdleTime() {
         return idleTime;
     }
 
-    /** @param idleTime total idle time in milliseconds */
+    /**
+     * Sets the total idle time.
+     *
+     * @param idleTime total of every idle gap, in milliseconds
+     */
     public void setIdleTime(long idleTime) {
         this.idleTime = idleTime;
     }
 
-    /** @return active coding time, which is the session length minus the idle time, in milliseconds */
+    /** {@return the active coding time, which is the session length minus the idle time, in milliseconds} */
     public long getActiveTime() {
         return getSessionDuration() - idleTime;
     }
 
-    /** @return how many edits there were in the session */
+    /** {@return how many edits there were in the session} */
     public int getEditCount() {
         return editCount;
     }
 
-    /** @param editCount how many edits there were in the session */
+    /**
+     * Sets how many edits there were.
+     *
+     * @param editCount the number of EDIT events in the session
+     */
     public void setEditCount(int editCount) {
         this.editCount = editCount;
     }
@@ -151,22 +177,30 @@ public class SessionSummary {
         return editCount * (double) MILLIS_PER_MINUTE / active;
     }
 
-    /** @return compile attempts, successful plus failed */
+    /** {@return the compile attempts, successful plus failed} */
     public int getTotalCompilations() {
         return totalCompilations;
     }
 
-    /** @param totalCompilations compile attempts, successful plus failed */
+    /**
+     * Sets the number of compile attempts.
+     *
+     * @param totalCompilations successful plus failed compiles
+     */
     public void setTotalCompilations(int totalCompilations) {
         this.totalCompilations = totalCompilations;
     }
 
-    /** @return compiles that finished with no errors */
+    /** {@return the compiles that finished with no errors} */
     public int getSuccessfulCompilations() {
         return successfulCompilations;
     }
 
-    /** @param successfulCompilations compiles that finished with no errors */
+    /**
+     * Sets the number of compiles that worked.
+     *
+     * @param successfulCompilations compiles that finished with no errors
+     */
     public void setSuccessfulCompilations(int successfulCompilations) {
         this.successfulCompilations = successfulCompilations;
     }
@@ -183,7 +217,7 @@ public class SessionSummary {
         return successfulCompilations * 100.0 / totalCompilations;
     }
 
-    /** @return each error code with how many times it came up, sorted by code */
+    /** {@return each error code with how many times it came up, sorted by code} */
     public Map<String, Integer> getErrorCounts() {
         return errorCounts;
     }
@@ -202,77 +236,105 @@ public class SessionSummary {
         }
     }
 
-    /** @return the time between each pair of finished compiles, in milliseconds */
+    /** {@return the time between each pair of finished compiles, in milliseconds} */
     public List<Long> getCompileIntervals() {
         return compileIntervals;
     }
 
-    /** @param interval time since the last finished compile, in milliseconds */
+    /**
+     * Adds the gap since the last finished compile to the end of the list.
+     *
+     * @param interval time since the last finished compile, in milliseconds
+     */
     public void addCompileInterval(long interval) {
         compileIntervals.add(interval);
     }
 
-    /** @return how many runs there were */
+    /** {@return how many runs there were} */
     public int getTotalRuns() {
         return totalRuns;
     }
 
-    /** @param totalRuns how many runs there were */
+    /**
+     * Sets how many runs there were.
+     *
+     * @param totalRuns every run of a method or constructor
+     */
     public void setTotalRuns(int totalRuns) {
         this.totalRuns = totalRuns;
     }
 
-    /** @return runs that finished normally */
+    /** {@return the runs that finished normally} */
     public int getNormalRuns() {
         return normalRuns;
     }
 
-    /** @param normalRuns runs that finished normally */
+    /**
+     * Sets how many runs finished normally.
+     *
+     * @param normalRuns runs that finished normally
+     */
     public void setNormalRuns(int normalRuns) {
         this.normalRuns = normalRuns;
     }
 
-    /** @return runs that ended with an exception */
+    /** {@return the runs that ended with an exception} */
     public int getExceptionRuns() {
         return exceptionRuns;
     }
 
-    /** @param exceptionRuns runs that ended with an exception */
+    /**
+     * Sets how many runs ended with an exception.
+     *
+     * @param exceptionRuns runs that ended with an exception
+     */
     public void setExceptionRuns(int exceptionRuns) {
         this.exceptionRuns = exceptionRuns;
     }
 
-    /** @return runs the student stopped early */
+    /** {@return the runs the student stopped early} */
     public int getTerminatedRuns() {
         return terminatedRuns;
     }
 
-    /** @param terminatedRuns runs the student stopped early */
+    /**
+     * Sets how many runs the student stopped early.
+     *
+     * @param terminatedRuns runs that were stopped before they finished
+     */
     public void setTerminatedRuns(int terminatedRuns) {
         this.terminatedRuns = terminatedRuns;
     }
 
-    /** @return runs with no status from BlueJ */
+    /** {@return the runs with no status from BlueJ} */
     public int getUnknownRuns() {
         return unknownRuns;
     }
 
-    /** @param unknownRuns runs with no status from BlueJ */
+    /**
+     * Sets how many runs had no status.
+     *
+     * @param unknownRuns runs where BlueJ did not give a status
+     */
     public void setUnknownRuns(int unknownRuns) {
         this.unknownRuns = unknownRuns;
     }
 
-    /** @return class creations and first method definitions in time order */
+    /** {@return the class creations and first method definitions in time order} */
     public List<TelemetryEvent> getTimeline() {
         return timeline;
     }
 
-    /** @param event a class creation or a method's first definition, added to the end of the timeline */
+    /**
+     * Adds an event to the end of the timeline.
+     *
+     * @param event a class creation or a method's first definition
+     */
     public void addTimelineEvent(TelemetryEvent event) {
         timeline.add(event);
     }
 
-    /** @return every event collected in the session */
+    /** {@return every event collected in the session} */
     public List<TelemetryEvent> getEvents() {
         return events;
     }

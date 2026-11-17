@@ -33,6 +33,11 @@ public class JsonExporter extends AbstractExporter {
     private JsonObject root;
 
     /** @return {@code json} */
+ 
+    /** Makes a JSON exporter. One is made in {@code TelemetryExtension.startup()} and reused for every export. */
+    public JsonExporter() {
+    }
+    
     @Override
     protected String getExtension() {
         return "json";
