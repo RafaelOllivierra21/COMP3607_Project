@@ -19,25 +19,51 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entry point of the BlueJ telemetry plugin and the Facade for the whole system.
+ *
+ * BlueJ loads this class and calls {@link #startup(BlueJ)}, which creates and wires up
+ * the monitors, the shared {@link EventBuffer}, the exporters, the Tools menu and the
+ * autosave thread. Everything else only has to talk to this one class. When BlueJ
+ * closes, {@link #terminate()} stops the threads and writes the final report.
+ *
+ * It is also an Observer of BlueJ's {@link PackageListener}, which it uses to record
+ * when projects are opened and closed.
+ */
 public class TelemetryExtension extends Extension implements PackageListener {
 
     // how long bluej waits for the final report when it closes
+    /** How long BlueJ waits for the final report to be written when it closes, in milliseconds. */
     private static final long FINAL_REPORT_WAIT_MS = 10000;
 
+    /** Shared buffer that every monitor records into and the exporters read from. */
     private final EventBuffer buffer = new EventBuffer();
+    /** Background thread running the {@link ClassMonitor} scan. */
     private Thread classSampler;
+    /** Background thread running the {@link EditorMonitor} sampling. */
     private Thread editorSampler;
 
     // part 2, exporting the json and pdf
+    /** Folder the JSON and PDF reports are saved in. */
     private File folder;
+    /** The exporters used for a full report: JSON and PDF. */
     private List<Exporter> exporters;
+    /** The single background thread that writes every report file. */
     private ExportRunner runner;
+    /** Background thread that saves the JSON report every 60 seconds in case BlueJ crashes. */
     private Thread autosaver;
 
+    /** @return the shared buffer holding every event recorded so far */
     public EventBuffer getBuffer() {
         return buffer;
     }
 
+    /**
+     * Called once by BlueJ when the plugin loads. Registers the listeners, starts the
+     * background threads, and sets up the Tools menu and autosave.
+     *
+     * @param bluej the BlueJ entry point
+     */
     @Override
     public void startup(BlueJ bluej) {
         bluej.addPackageListener(this);
@@ -85,6 +111,11 @@ public class TelemetryExtension extends Extension implements PackageListener {
         System.out.println("[Telemetry] plugin started");
     }
 
+    /**
+     * Records {@link TelemetryEvent#PROJECT_OPEN} with the project name.
+     *
+     * @param event the package event from BlueJ
+     */
     @Override
     public void packageOpened(PackageEvent event) {
         try {
@@ -96,6 +127,12 @@ public class TelemetryExtension extends Extension implements PackageListener {
         }
     }
 
+    /**
+     * Records {@link TelemetryEvent#PROJECT_CLOSE} with the project name, or {@code unknown}
+     * if the project can no longer be read.
+     *
+     * @param event the package event from BlueJ
+     */
     @Override
     public void packageClosing(PackageEvent event) {
         String name;
@@ -108,6 +145,7 @@ public class TelemetryExtension extends Extension implements PackageListener {
         System.out.println("[Telemetry] project closing");
     }
 
+    /** Called by BlueJ when it closes. Stops the background threads and writes the final report. */
     @Override
     public void terminate() {
         if (classSampler != null) {
@@ -129,26 +167,31 @@ public class TelemetryExtension extends Extension implements PackageListener {
         System.out.println("[Telemetry] plugin terminating");
     }
 
+    /** @return {@code true} if BlueJ's extensions API is version 3 or newer */
     @Override
     public boolean isCompatible() {
         return getExtensionsAPIVersionMajor() >= 3;
     }
 
+    /** @return the plugin name shown in BlueJ */
     @Override
     public String getName() {
         return "BlueJ Telemetry";
     }
 
+    /** @return the plugin version shown in BlueJ */
     @Override
     public String getVersion() {
         return "1.0";
     }
 
+    /** @return a short description of the plugin shown in BlueJ */
     @Override
     public String getDescription() {
         return "Collects telemetry data for COMP 3607";
     }
 
+    /** @return the project's GitHub page, or {@code null} if the address cannot be built */
     @Override
     public URL getURL() {
         try {
