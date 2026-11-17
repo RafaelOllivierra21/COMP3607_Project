@@ -23,10 +23,10 @@ import java.util.Date;
 
 /**
  * Makes the A4 PDF report for a session using OpenPDF, kept to 2 pages at most.
- 
+
  * It is one of the concrete strategies for {@link Exporter}, and a subclass in the Template Method
  * pattern. {@link AbstractExporter#export} decides the order of the parts, and this class draws each one:
- 
+
  * Not thread safe. It keeps the open document between steps, so only one export should use it
  * at a time. The single export thread in {@link ExportRunner} makes sure of that.
  */
@@ -55,7 +55,7 @@ public class PdfExporter extends AbstractExporter {
 
     /** Writer for the document, also used to draw the bar chart. */
     private PdfWriter writer;
-    
+
     /** Makes a PDF exporter. One is made in {@code TelemetryExtension.startup()} and reused for every export. */
     public PdfExporter() {
     }
@@ -87,8 +87,9 @@ public class PdfExporter extends AbstractExporter {
     }
 
     /**
-     * Adds the student ID, the session times and table 1: session length, active and idle time,
-     * edits, edits per active minute, compile attempts, successful compiles and the success rate.
+     * Adds the header (student ID, project name and session times) and the activity table:
+     * session length, active and idle time, edits, edits per active minute, compile attempts,
+     * successful compiles and the success rate.
      *
      * @param summary the session totals
      * @throws IOException if OpenPDF cannot add to the document
@@ -96,6 +97,7 @@ public class PdfExporter extends AbstractExporter {
     @Override
     protected void writeSessionInfo(SessionSummary summary) throws IOException {
         add(new Paragraph("Student ID: " + summary.getStudentId(), TEXT_FONT));
+        add(new Paragraph("Project: " + summary.getProjectName(), TEXT_FONT));
         add(new Paragraph("Session: " + formatTime(summary.getSessionStart())
                 + " to " + formatTime(summary.getSessionEnd()), TEXT_FONT));
 
@@ -114,8 +116,8 @@ public class PdfExporter extends AbstractExporter {
     }
 
     /**
-     * Adds table 2, each error code with its label and count, and a bar chart of the counts
-     * right under it. If there were no errors it just says so.
+     * Adds the errors table, each error code with its label and count, and a bar chart of the
+     * counts right under it. If there were no errors it just says so.
      *
      * @param summary the session totals
      * @throws IOException if OpenPDF cannot add to the document
@@ -147,9 +149,41 @@ public class PdfExporter extends AbstractExporter {
     }
 
     /**
-     * Adds table 3, class creations and method definitions in the order they happened.
+     * Adds the runs table: one header row and one row of counts, so it stays short and
+     * the report keeps within 2 pages. This is a hook in the parent.
+     *
+     * @param summary the session totals
+     * @throws IOException if OpenPDF cannot add to the document
+     */
+    @Override
+    protected void writeRunInfo(SessionSummary summary) throws IOException {
+        add(heading("Program runs"));
+
+        if (summary.getTotalRuns() == 0) {
+            add(new Paragraph("No methods or constructors were run this session.", TEXT_FONT));
+            return;
+        }
+
+        // one row across instead of one row per status so it only takes 2 lines
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.addCell(new Phrase("Total", BOLD_FONT));
+        table.addCell(new Phrase("Normal", BOLD_FONT));
+        table.addCell(new Phrase("Exception", BOLD_FONT));
+        table.addCell(new Phrase("Terminated", BOLD_FONT));
+        table.addCell(new Phrase("Unknown", BOLD_FONT));
+        table.addCell(new Phrase(String.valueOf(summary.getTotalRuns()), TEXT_FONT));
+        table.addCell(new Phrase(String.valueOf(summary.getNormalRuns()), TEXT_FONT));
+        table.addCell(new Phrase(String.valueOf(summary.getExceptionRuns()), TEXT_FONT));
+        table.addCell(new Phrase(String.valueOf(summary.getTerminatedRuns()), TEXT_FONT));
+        table.addCell(new Phrase(String.valueOf(summary.getUnknownRuns()), TEXT_FONT));
+        add(table);
+    }
+
+    /**
+     * Adds the timeline table, class creations and method definitions in the order they happened.
      * Only the first {@link #MAX_TIMELINE_ROWS} rows are shown, then a note says how many
-     * more are in the JSON file. This is a hook in the parent, only the PDF uses it.
+     * more are in the JSON file. This is a hook in the parent.
      *
      * @param summary the session totals
      * @throws IOException if OpenPDF cannot add to the document
