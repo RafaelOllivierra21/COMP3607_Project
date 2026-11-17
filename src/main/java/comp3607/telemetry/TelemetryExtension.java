@@ -11,6 +11,7 @@ import comp3607.telemetry.report.ExportRunner;
 import comp3607.telemetry.report.Exporter;
 import comp3607.telemetry.report.JsonExporter;
 import comp3607.telemetry.report.PdfExporter;
+import comp3607.telemetry.report.ReportLocation;
 import comp3607.telemetry.report.TelemetryMenu;
 
 import java.io.File;
@@ -21,18 +22,9 @@ import java.util.List;
 
 /**
  * Entry point of the BlueJ telemetry plugin and the Facade for the whole system.
- *
- * BlueJ loads this class and calls {@link #startup(BlueJ)}, which creates and wires up
- * the monitors, the shared {@link EventBuffer}, the exporters, the Tools menu and the
- * autosave thread. Everything else only has to talk to this one class. When BlueJ
- * closes, {@link #terminate()} stops the threads and writes the final report.
- *
- * It is also an Observer of BlueJ's {@link PackageListener}, which it uses to record
- * when projects are opened and closed.
  */
 public class TelemetryExtension extends Extension implements PackageListener {
 
-    // how long bluej waits for the final report when it closes
     /** How long BlueJ waits for the final report to be written when it closes, in milliseconds. */
     private static final long FINAL_REPORT_WAIT_MS = 10000;
 
@@ -44,8 +36,8 @@ public class TelemetryExtension extends Extension implements PackageListener {
     private Thread editorSampler;
 
     // part 2, exporting the json and pdf
-    /** Folder the JSON and PDF reports are saved in. */
-    private File folder;
+    /** Decides the folder and file names for every report, set to the project folder when a project opens. */
+    private ReportLocation location;
     /** The exporters used for a full report: JSON and PDF. */
     private List<Exporter> exporters;
     /** The single background thread that writes every report file. */
@@ -82,8 +74,9 @@ public class TelemetryExtension extends Extension implements PackageListener {
         editorSampler.setDaemon(true);
         editorSampler.start();
 
-        // part 2, reports get saved in a BlueJTelemetry folder in the users home folder
-        folder = new File(System.getProperty("user.home"), "BlueJTelemetry");
+        // part 2, reports go in the open project's folder
+        // the BlueJTelemetry folder in the users home is only used if no project has been opened yet
+        location = new ReportLocation(new File(System.getProperty("user.home"), "BlueJTelemetry"));
 
         JsonExporter json = new JsonExporter();
         PdfExporter pdf = new PdfExporter();
@@ -101,10 +94,10 @@ public class TelemetryExtension extends Extension implements PackageListener {
         runner.start();
 
         // tools menu item for a snapshot at any time
-        bluej.setMenuGenerator(new TelemetryMenu(buffer, runner, exporters, folder));
+        bluej.setMenuGenerator(new TelemetryMenu(buffer, runner, exporters, location));
 
         // json autosave every 60 seconds in case bluej crashes
-        autosaver = new Thread(new AutosaveTimer(buffer, runner, autosaveExporters, folder), "telemetry-autosave");
+        autosaver = new Thread(new AutosaveTimer(buffer, runner, autosaveExporters, location), "telemetry-autosave");
         autosaver.setDaemon(true);
         autosaver.start();
 
@@ -112,7 +105,8 @@ public class TelemetryExtension extends Extension implements PackageListener {
     }
 
     /**
-     * Records {@link TelemetryEvent#PROJECT_OPEN} with the project name.
+     * Records {@link TelemetryEvent#PROJECT_OPEN} with the project name, and tells the
+     * {@link ReportLocation} to save reports in this project's folder from now on.
      *
      * @param event the package event from BlueJ
      */
@@ -120,8 +114,10 @@ public class TelemetryExtension extends Extension implements PackageListener {
     public void packageOpened(PackageEvent event) {
         try {
             String name = event.getPackage().getProject().getName();
+            File dir = event.getPackage().getProject().getDir();
+            location.setProject(dir, name);
             buffer.add(TelemetryEvent.PROJECT_OPEN, name);
-            System.out.println("[Telemetry] project opened: " + name);
+            System.out.println("[Telemetry] project opened: " + name + " (reports go to " + dir.getPath() + ")");
         } catch (ProjectNotOpenException e) {
             System.out.println("[Telemetry] project closed before it could be read");
         }
@@ -145,7 +141,10 @@ public class TelemetryExtension extends Extension implements PackageListener {
         System.out.println("[Telemetry] project closing");
     }
 
-    /** Called by BlueJ when it closes. Stops the background threads and writes the final report. */
+    /**
+     * Called by BlueJ when it closes. Stops the background threads and writes the final report
+     * into the last opened project's folder, named with the project name and the time.
+     */
     @Override
     public void terminate() {
         if (classSampler != null) {
@@ -160,7 +159,8 @@ public class TelemetryExtension extends Extension implements PackageListener {
             autosaver.interrupt();
         }
         if (runner != null) {
-            String name = ExportCommand.nameWithTime("final");
+            File folder = location.getFolder();
+            String name = location.nameWithTime("final");
             runner.finish(new ExportCommand(buffer, exporters, folder, name), FINAL_REPORT_WAIT_MS);
         }
 
