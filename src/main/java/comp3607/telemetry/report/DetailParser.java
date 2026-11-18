@@ -6,7 +6,9 @@ import comp3607.telemetry.ErrorCodes;
  * Splits the detail strings that the monitors save in each event into separate fields.
  
  * The monitors store every event's detail as one string so the event model stays simple,
- * and this class takes those strings apart again for the JSON and the totals. The formats are:
+ * and this class takes those strings apart again for the JSON and the totals. The formats are
+ * {@code code|line|message} for compile errors, {@code Class.method | status | result} for runs
+ * and {@code OldName -> NewName} for renames.
 
  * Every method is static, so there is no need to make a DetailParser.
  * Every method copes with null or badly formed text by giving back a safe default instead

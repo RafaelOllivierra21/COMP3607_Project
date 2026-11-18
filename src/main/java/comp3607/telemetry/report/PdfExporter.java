@@ -26,6 +26,8 @@ import java.util.Date;
 
  * It is one of the concrete strategies for {@link Exporter}, and a subclass in the Template Method
  * pattern. {@link AbstractExporter#export} decides the order of the parts, and this class draws each one:
+ * the header and activity table, the errors table and bar chart, the program runs table and the
+ * class and method timeline. It leaves out the full event list, which only goes in the JSON.
 
  * Not thread safe. It keeps the open document between steps, so only one export should use it
  * at a time. The single export thread in {@link ExportRunner} makes sure of that.

@@ -12,7 +12,7 @@ The files in this folder are not part of the plugin. Maven only builds src/main/
 
 ## How to run them
 
-1. Build and install the plugin as shown on the How to Run page of the wiki.
+1. Build and install the plugin as shown on the [Setup page](https://github.com/RafaelOllivierra21/COMP3607_Project/wiki/Setup) of the wiki.
 2. Close BlueJ completely before each use case and start it fresh. The plugin treats one BlueJ run as one session, so starting fresh keeps each report to just that use case.
 3. Follow the STEPS.md file in the use case's folder.
 4. The JSON and PDF reports are saved in the BlueJ project folder that the use case creates, named with the project name and the time.
