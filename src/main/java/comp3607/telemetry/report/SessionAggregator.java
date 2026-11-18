@@ -6,21 +6,39 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-// works out all the session totals from the list of events in the buffer
+/**
+ * Works out all the session totals from the list of events in the buffer.
+ 
+ * {@link ExportCommand} calls {@link #summarise(List, long)} with a copy of the buffer's events
+ * every time a report is made, and the exporters write out the {@link SessionSummary} it returns.
+ * All the maths for the reports is in this one class, so it can be tested without BlueJ running.
+ */
 public class SessionAggregator {
 
-    // 2 minutes with no edits counts as idle
+    /** A gap with no edits this long or longer counts as idle, 2 minutes in milliseconds. */
     public static final long IDLE_LIMIT = 2 * 60 * 1000;
 
-    // endTime is when the export happens, or when BlueJ closes for the final report
+    /** Makes an aggregator. It keeps no state between calls, so one can be reused for any number of sessions. */
+    public SessionAggregator() {
+    }
+
+    /**
+     * Builds a summary of the session from its events. The list is only read, never changed.
+     *
+     * @param events the session's events in the order they happened
+     * @param endTime when the session ends, which is the export time or when BlueJ closes
+     * @return a new summary with every total filled in
+     */
     public SessionSummary summarise(List<TelemetryEvent> events, long endTime) {
         SessionSummary summary = new SessionSummary();
         summary.setEvents(events);
+        summary.setProjectName(findProjectName(events));
 
         long start = findStart(events, endTime);
         summary.setSessionStart(start);
         summary.setSessionEnd(endTime);
         summary.setIdleTime(findIdleTime(events, start, endTime));
+        summary.setEditCount(countEdits(events, start));
 
         countCompiles(events, summary);
         countRuns(events, summary);
@@ -29,22 +47,41 @@ public class SessionAggregator {
         return summary;
     }
 
-    // the session starts when the first project opens
+    /**
+     * Finds the name of the last project that was opened. It uses the last one, not the first,
+     * so it matches the project the report files are saved in and named after.
+     * Gives no_project if no project was opened.
+     */
+    private String findProjectName(List<TelemetryEvent> events) {
+        String name = ReportLocation.NO_PROJECT;
+        for (TelemetryEvent event : events) {
+            if (TelemetryEvent.PROJECT_OPEN.equals(event.getType())) {
+                name = event.getDetail();
+            }
+        }
+        return name;
+    }
+
+    /**
+     * Finds when the session started. Uses the first PROJECT_OPEN, or the first event if no
+     * project was opened, or the end time if there are no events at all.
+     */
     private long findStart(List<TelemetryEvent> events, long endTime) {
         for (TelemetryEvent event : events) {
             if (TelemetryEvent.PROJECT_OPEN.equals(event.getType())) {
                 return event.getTimestamp();
             }
         }
-        // no project opened so fall back to the first event, or the end time if there are none
         if (events.isEmpty()) {
             return endTime;
         }
         return events.get(0).getTimestamp();
     }
 
-    // any gap of 2 mins or more between edits counts as idle, the whole gap counts
-    // the session start and end are treated like edits so the edges get checked too
+    /**
+     * Adds up every gap of 2 minutes or more between edits. The session start and end are
+     * treated like edits so the time before the first edit and after the last one gets checked too.
+     */
     private long findIdleTime(List<TelemetryEvent> events, long start, long end) {
         long idle = 0;
         long lastEdit = start;
@@ -66,8 +103,24 @@ public class SessionAggregator {
         return idle;
     }
 
-    // attempts are COMPILE_OK plus COMPILE_FAILED
-    // COMPILE_ERROR fires once per error so it only goes into the error counts
+    /**
+     * Counts the EDIT events from the session start onwards. It uses the same start as
+     * the idle time so the edit count and the idle time always cover the same stretch.
+     */
+    private int countEdits(List<TelemetryEvent> events, long start) {
+        int edits = 0;
+        for (TelemetryEvent event : events) {
+            if (TelemetryEvent.EDIT.equals(event.getType()) && event.getTimestamp() >= start) {
+                edits++;
+            }
+        }
+        return edits;
+    }
+
+    /**
+     * Counts compile attempts and successes, the gaps between finished compiles, and each
+     * error code. COMPILE_ERROR fires once per error, so it only goes into the error counts.
+     */
     private void countCompiles(List<TelemetryEvent> events, SessionSummary summary) {
         int total = 0;
         int successful = 0;
@@ -96,6 +149,7 @@ public class SessionAggregator {
         summary.setSuccessfulCompilations(successful);
     }
 
+    /** Counts the runs by how they ended: normal, exception, terminated or unknown. */
     private void countRuns(List<TelemetryEvent> events, SessionSummary summary) {
         int total = 0;
         int normal = 0;
@@ -126,8 +180,11 @@ public class SessionAggregator {
         summary.setUnknownRuns(unknown);
     }
 
-    // class creations and method defs go in the timeline in the order they happened
-    // the monitor reports every method again after each compile so a method only goes in the first time
+    /**
+     * Puts class creations and method definitions into the timeline in the order they happened.
+     * The class monitor reports every method again after each compile, so a method only goes
+     * in the first time it shows up.
+     */
     private void buildTimeline(List<TelemetryEvent> events, SessionSummary summary) {
         Set<String> methodsSeen = new HashSet<>();
 
