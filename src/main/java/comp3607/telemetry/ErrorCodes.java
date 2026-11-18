@@ -11,6 +11,10 @@ public class ErrorCodes {
     /** Code used when a compiler message matches none of the known errors. */
     public static final String OTHER = "E99";
 
+    /** Creates an {@code ErrorCodes} object. All the methods are static, so there is normally no need to. */
+    public ErrorCodes() {
+    }
+
     /**
      * Lookup table. Each row is {@code {code, readable label, lowercase text to find
      * in the compiler message}}. The last row has no text to match, so it is never

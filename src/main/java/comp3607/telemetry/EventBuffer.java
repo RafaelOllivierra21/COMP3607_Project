@@ -15,6 +15,10 @@ public class EventBuffer {
     /** All events recorded so far, in the order they were added. */
     private final List<TelemetryEvent> events = new ArrayList<>();
 
+    /** Creates an empty buffer. */
+    public EventBuffer() {
+    }
+
     /**
      * Records a new event stamped with the current time.
      *

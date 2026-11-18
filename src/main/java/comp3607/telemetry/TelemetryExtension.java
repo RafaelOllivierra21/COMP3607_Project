@@ -53,7 +53,15 @@ public class TelemetryExtension extends Extension implements PackageListener {
     /** Background thread that saves the JSON report every 60 seconds in case BlueJ crashes. */
     private Thread autosaver;
 
-    /** @return the shared buffer holding every event recorded so far */
+    /** Creates the extension. BlueJ calls this once when it loads the plugin. */
+    public TelemetryExtension() {
+    }
+
+    /**
+     * Gets the shared buffer.
+     *
+     * @return the shared buffer holding every event recorded so far
+     */
     public EventBuffer getBuffer() {
         return buffer;
     }
@@ -167,31 +175,51 @@ public class TelemetryExtension extends Extension implements PackageListener {
         System.out.println("[Telemetry] plugin terminating");
     }
 
-    /** @return {@code true} if BlueJ's extensions API is version 3 or newer */
+    /**
+     * Checks that this plugin can run with the BlueJ that loaded it.
+     *
+     * @return {@code true} if BlueJ's extensions API is version 3 or newer
+     */
     @Override
     public boolean isCompatible() {
         return getExtensionsAPIVersionMajor() >= 3;
     }
 
-    /** @return the plugin name shown in BlueJ */
+    /**
+     * Gets the plugin name.
+     *
+     * @return the plugin name shown in BlueJ
+     */
     @Override
     public String getName() {
         return "BlueJ Telemetry";
     }
 
-    /** @return the plugin version shown in BlueJ */
+    /**
+     * Gets the plugin version.
+     *
+     * @return the plugin version shown in BlueJ
+     */
     @Override
     public String getVersion() {
         return "1.0";
     }
 
-    /** @return a short description of the plugin shown in BlueJ */
+    /**
+     * Gets a short description of the plugin.
+     *
+     * @return a short description of the plugin shown in BlueJ
+     */
     @Override
     public String getDescription() {
         return "Collects telemetry data for COMP 3607";
     }
 
-    /** @return the project's GitHub page, or {@code null} if the address cannot be built */
+    /**
+     * Gets the web page of the plugin.
+     *
+     * @return the project's GitHub page, or {@code null} if the address cannot be built
+     */
     @Override
     public URL getURL() {
         try {

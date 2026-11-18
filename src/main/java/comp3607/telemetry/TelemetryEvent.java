@@ -30,9 +30,9 @@ public final class TelemetryEvent {
     /** Event type: a user-triggered compile succeeded. Detail is the comma separated file names. */
     public static final String COMPILE_OK = "COMPILE_OK";
     /** Event type: the compiler reported an error. Detail is {@code code|line|message}, e.g. {@code E02|12|';' expected}. */
-    public static final String COMPILE_ERROR = "COMPILE_ERROR";   
+    public static final String COMPILE_ERROR = "COMPILE_ERROR";
     /** Event type: a user-triggered compile finished with errors. Detail is the comma separated file names. */
-    public static final String COMPILE_FAILED = "COMPILE_FAILED"; 
+    public static final String COMPILE_FAILED = "COMPILE_FAILED";
 
     /** Event type: a method was found in a class that compiled successfully. Detail is {@code ClassName.methodName}. */
     public static final String METHOD_DEFINED = "METHOD_DEFINED";
@@ -60,17 +60,29 @@ public final class TelemetryEvent {
         this.timestamp = timestamp;
     }
 
-    /** @return the event type constant */
+    /**
+     * Gets the type of this event.
+     *
+     * @return the event type constant
+     */
     public String getType() {
         return type;
     }
 
-    /** @return the extra information for this event */
+    /**
+     * Gets the extra information stored with this event.
+     *
+     * @return the extra information for this event
+     */
     public String getDetail() {
         return detail;
     }
 
-    /** @return the time the event was recorded, in milliseconds since the epoch */
+    /**
+     * Gets the time this event was recorded.
+     *
+     * @return the time the event was recorded, in milliseconds since the epoch
+     */
     public long getTimestamp() {
         return timestamp;
     }
