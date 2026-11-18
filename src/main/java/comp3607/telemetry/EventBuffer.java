@@ -4,18 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Thread-safe list of {@link TelemetryEvent}s shared by the whole plugin.
+ * Stores the {@link TelemetryEvent}s recorded during a session and keeps them safe
+ * to use from several threads at once.
  *
  * Every monitor (class, compile, run, editor) adds events from its own thread,
- * while the report package reads them from another. The monitors only record
- * into this buffer and never write files themselves.
+ * while the report package reads them from another. Both methods are synchronized,
+ * so no event is lost or half written. The monitors only record into this buffer
+ * and never write files themselves.
+ *
+ * {@link TelemetryExtension} creates the one shared buffer and passes it to every
+ * monitor and to the exporters, because the project does not use a Singleton. A
+ * monitor records with {@code buffer.add(TelemetryEvent.COMPILE_OK, "Hello.java")}
+ * and the report reads with {@code buffer.getEvents()}.
  */
 public class EventBuffer {
 
     /** All events recorded so far, in the order they were added. */
     private final List<TelemetryEvent> events = new ArrayList<>();
 
-    /** Creates an empty buffer. */
+    /** Creates an empty buffer. {@link TelemetryExtension} calls this once when the plugin starts. */
     public EventBuffer() {
     }
 
@@ -30,8 +37,8 @@ public class EventBuffer {
     }
 
     /**
-     * Gives a snapshot of the events so far. The returned list is a copy, so the
-     * caller can read it while other threads keep adding events.
+     * Returns a snapshot of the events so far. The list is a copy, so the caller
+     * can read it while other threads keep adding events.
      *
      * @return a copy of the recorded events, oldest first
      */

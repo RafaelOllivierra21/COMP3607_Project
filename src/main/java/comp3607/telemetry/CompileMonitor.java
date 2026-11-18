@@ -6,11 +6,13 @@ import bluej.extensions2.event.CompileListener;
 import java.io.File;
 
 /**
- * Observer of BlueJ's compiler. BlueJ is the subject and calls this class back
- * whenever a compile starts, succeeds, fails or reports an error.
+ * Listens to BlueJ's compiler as an Observer. BlueJ is the subject and calls this
+ * class back whenever a compile starts, succeeds, fails or reports an error.
  *
  * Only compiles the user asked for are recorded, so BlueJ's own background
  * compiles do not show up in the report. Events go into the {@link EventBuffer}.
+ * {@link TelemetryExtension} creates the monitor and registers it with BlueJ when
+ * the plugin starts.
  */
 public class CompileMonitor implements CompileListener {
 
@@ -39,7 +41,8 @@ public class CompileMonitor implements CompileListener {
     }
 
     /**
-     * Called for compiler warnings. Warnings are not part of the report, so nothing is recorded.
+     * Ignores compiler warnings. BlueJ requires this method, but warnings are not part
+     * of the report, so nothing is recorded.
      *
      * @param event the compile event from BlueJ
      */

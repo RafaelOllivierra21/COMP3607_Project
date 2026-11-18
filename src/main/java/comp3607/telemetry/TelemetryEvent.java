@@ -1,12 +1,13 @@
 package comp3607.telemetry;
 
 /**
- * One telemetry record: what happened, extra detail about it, and when it happened.
+ * Holds one telemetry record: what happened, extra detail about it, and when it happened.
  *
- * Instances are immutable, so they are safe to share between threads. The
- * {@code String} constants below are the event types used across the plugin.
- * The monitors create events through {@link EventBuffer#add(String, String)} and
- * the report package reads them back out of the buffer.
+ * Instances are immutable, so they can be shared between threads without locking.
+ * The {@code String} constants in this class are the event types used across the
+ * plugin. The monitors do not normally call the constructor themselves. They call
+ * {@link EventBuffer#add(String, String)}, which stamps the event with the current
+ * time, and the report package reads the events back out of the buffer.
  */
 public final class TelemetryEvent {
 
@@ -48,7 +49,7 @@ public final class TelemetryEvent {
     private final long timestamp;
 
     /**
-     * Creates an event.
+     * Creates an event with a fixed type, detail and time.
      *
      * @param type one of the event type constants
      * @param detail extra information for this event type
@@ -61,27 +62,28 @@ public final class TelemetryEvent {
     }
 
     /**
-     * Gets the type of this event.
+     * Returns the type of this event, which tells the report how to read the detail.
      *
-     * @return the event type constant
+     * @return one of the event type constants of this class, such as {@link #COMPILE_OK}
      */
     public String getType() {
         return type;
     }
 
     /**
-     * Gets the extra information stored with this event.
+     * Returns the extra information stored with this event. What it holds depends on
+     * the type, as described on each type constant.
      *
-     * @return the extra information for this event
+     * @return the detail text, for example a class name or {@code code|line|message}
      */
     public String getDetail() {
         return detail;
     }
 
     /**
-     * Gets the time this event was recorded.
+     * Returns the time this event was recorded.
      *
-     * @return the time the event was recorded, in milliseconds since the epoch
+     * @return the time in milliseconds since the epoch, as given by {@code System.currentTimeMillis()}
      */
     public long getTimestamp() {
         return timestamp;

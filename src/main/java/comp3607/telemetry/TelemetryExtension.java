@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Entry point of the BlueJ telemetry plugin and the Facade for the whole system.
+ * Serves as the entry point of the BlueJ telemetry plugin and as the Facade for the
+ * whole system.
  *
+ * BlueJ creates the one instance itself, so other classes should not.
  * BlueJ loads this class and calls {@link #startup(BlueJ)}, which creates and wires up
  * the monitors, the shared {@link EventBuffer}, the exporters, the Tools menu and the
  * autosave thread. Everything else only has to talk to this one class. When BlueJ
@@ -53,22 +55,25 @@ public class TelemetryExtension extends Extension implements PackageListener {
     /** Background thread that saves the JSON report every 60 seconds in case BlueJ crashes. */
     private Thread autosaver;
 
-    /** Creates the extension. BlueJ calls this once when it loads the plugin. */
+    /**
+     * Creates the extension. BlueJ calls this once when it loads the plugin. The
+     * constructor does nothing else, because all the setup happens in {@link #startup(BlueJ)}.
+     */
     public TelemetryExtension() {
     }
 
     /**
-     * Gets the shared buffer.
+     * Returns the shared buffer, for any class that needs to read or add events.
      *
-     * @return the shared buffer holding every event recorded so far
+     * @return the one buffer shared by all the monitors and the exporters
      */
     public EventBuffer getBuffer() {
         return buffer;
     }
 
     /**
-     * Called once by BlueJ when the plugin loads. Registers the listeners, starts the
-     * background threads, and sets up the Tools menu and autosave.
+     * Registers the listeners, starts the background threads, and sets up the Tools menu
+     * and autosave. BlueJ calls this once when the plugin loads.
      *
      * @param bluej the BlueJ entry point
      */
@@ -153,7 +158,7 @@ public class TelemetryExtension extends Extension implements PackageListener {
         System.out.println("[Telemetry] project closing");
     }
 
-    /** Called by BlueJ when it closes. Stops the background threads and writes the final report. */
+    /** Stops the background threads and writes the final report. BlueJ calls this once when it closes. */
     @Override
     public void terminate() {
         if (classSampler != null) {
@@ -176,9 +181,10 @@ public class TelemetryExtension extends Extension implements PackageListener {
     }
 
     /**
-     * Checks that this plugin can run with the BlueJ that loaded it.
+     * Returns whether this plugin can run with the BlueJ that loaded it. The plugin
+     * needs version 3 or newer of BlueJ's extensions API.
      *
-     * @return {@code true} if BlueJ's extensions API is version 3 or newer
+     * @return {@code true} if the plugin can run, {@code false} if BlueJ is too old
      */
     @Override
     public boolean isCompatible() {
@@ -186,9 +192,9 @@ public class TelemetryExtension extends Extension implements PackageListener {
     }
 
     /**
-     * Gets the plugin name.
+     * Returns the name BlueJ lists for this plugin.
      *
-     * @return the plugin name shown in BlueJ
+     * @return the plugin name, {@code BlueJ Telemetry}
      */
     @Override
     public String getName() {
@@ -196,9 +202,9 @@ public class TelemetryExtension extends Extension implements PackageListener {
     }
 
     /**
-     * Gets the plugin version.
+     * Returns the version number BlueJ shows next to the plugin name.
      *
-     * @return the plugin version shown in BlueJ
+     * @return the version text
      */
     @Override
     public String getVersion() {
@@ -206,9 +212,9 @@ public class TelemetryExtension extends Extension implements PackageListener {
     }
 
     /**
-     * Gets a short description of the plugin.
+     * Returns the one line description BlueJ shows for this plugin.
      *
-     * @return a short description of the plugin shown in BlueJ
+     * @return the description text
      */
     @Override
     public String getDescription() {
@@ -216,9 +222,10 @@ public class TelemetryExtension extends Extension implements PackageListener {
     }
 
     /**
-     * Gets the web page of the plugin.
+     * Returns the web page BlueJ links to from the plugin's information, which is the
+     * project's GitHub page.
      *
-     * @return the project's GitHub page, or {@code null} if the address cannot be built
+     * @return the GitHub page address, or {@code null} if the address cannot be built
      */
     @Override
     public URL getURL() {
