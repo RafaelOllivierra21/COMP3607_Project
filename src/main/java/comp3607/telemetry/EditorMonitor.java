@@ -18,6 +18,8 @@ import java.util.Set;
  * an Observer. It remembers a hash of each open editor's text: a changed hash means
  * {@link TelemetryEvent#EDIT}, and an unchanged one for two minutes means
  * {@link TelemetryEvent#IDLE}. Idle is reported once per quiet period for each class.
+ * {@link TelemetryExtension} starts the monitor on its own background thread when
+ * the plugin starts.
  */
 public class EditorMonitor implements Runnable {
 

@@ -14,14 +14,15 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Watches the classes in the open projects. It does two jobs:
+ * Watches the classes in the open projects and records what happens to them. It does two jobs:
  * <ul>
  * <li>As an Observer of BlueJ's {@link ClassListener}, it is called back when a class
  * is renamed, removed, or finishes compiling (which records its methods).</li>
  * <li>As a {@link Runnable} on its own thread, it compares the class list every five
  * seconds to spot newly created classes, because BlueJ gives no callback for that.</li>
  * </ul>
- * Everything is recorded into the {@link EventBuffer}.
+ * Everything is recorded into the {@link EventBuffer}. {@link TelemetryExtension#startup(bluej.extensions2.BlueJ)}
+ * creates one monitor, registers it with BlueJ and starts its thread.
  */
 public class ClassMonitor implements ClassListener, Runnable {
 
@@ -32,7 +33,6 @@ public class ClassMonitor implements ClassListener, Runnable {
     private final BlueJ bluej;
     /** Shared buffer the class events are written into. */
     private final EventBuffer buffer;
-    
 
     /** Class names seen at the last scan, keyed by project name. */
     private final Map<String, Set<String>> knownClasses = new HashMap<>();

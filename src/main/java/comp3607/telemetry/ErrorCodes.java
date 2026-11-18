@@ -1,15 +1,22 @@
 package comp3607.telemetry;
 
 /**
- * Turns raw Java compiler messages into short error codes (E01 to E18, and E99
- * for anything else) and turns codes back into readable labels.
+ * Translates raw Java compiler messages into short error codes (E01 to E18, and E99
+ * for anything else) and translates codes back into readable labels.
  *
- * The report uses these codes to count how often each kind of error happened.
+ * The report uses the codes to count how often each kind of error happened. All
+ * methods are static and the class keeps no state, so it is safe to call from any
+ * thread. For example, {@code codeFor("';' expected")} gives {@code E02} and
+ * {@code labelFor("E02")} gives {@code missing semicolon}.
  */
 public class ErrorCodes {
 
     /** Code used when a compiler message matches none of the known errors. */
     public static final String OTHER = "E99";
+
+    /** Creates an {@code ErrorCodes} object. All the methods are static, so there is no need to create one. */
+    public ErrorCodes() {
+    }
 
     /**
      * Lookup table. Each row is {@code {code, readable label, lowercase text to find
@@ -39,7 +46,8 @@ public class ErrorCodes {
     };
 
     /**
-     * Finds the error code for a compiler message by looking for the known text in it.
+     * Returns the error code for a compiler message by looking for known text in it.
+     * The first row of the table that matches wins.
      *
      * @param message the message from the Java compiler, may be {@code null}
      * @return the matching code such as {@code E02}, or {@link #OTHER} if none match
@@ -58,7 +66,7 @@ public class ErrorCodes {
     }
 
     /**
-     * Looks up the readable description for an error code.
+     * Returns the readable label for an error code, to show in the report.
      *
      * @param code an error code such as {@code E02}
      * @return the label such as {@code missing semicolon}, or {@code unknown} if the code is not in the table

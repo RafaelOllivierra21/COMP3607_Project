@@ -5,11 +5,13 @@ import bluej.extensions2.event.InvocationFinishedEvent;
 import bluej.extensions2.event.InvocationFinishedListener;
 
 /**
- * Observer of BlueJ's method and constructor runs. BlueJ is the subject and calls
- * this class back each time something finishes running, for example when the user
- * calls a method on the object bench.
+ * Listens for finished method and constructor runs as an Observer of BlueJ. BlueJ is
+ * the subject and calls this class back each time something finishes running, for
+ * example when the user calls a method on the object bench.
  *
- * Each run is recorded as {@code Class.method | status | result}.
+ * Each run is recorded into the {@link EventBuffer} as {@code Class.method | status | result}.
+ * {@link TelemetryExtension} creates the monitor and registers it with BlueJ when the
+ * plugin starts.
  */
 public class RunMonitor implements InvocationFinishedListener {
 
