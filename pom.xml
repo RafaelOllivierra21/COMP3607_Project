@@ -114,9 +114,6 @@
             <exclude>comp3607/telemetry/ClassMonitor.class</exclude>
             <exclude>comp3607/telemetry/EditorMonitor*.class</exclude>
             <exclude>comp3607/telemetry/report/TelemetryMenu*.class</exclude>
-            <exclude>comp3607/telemetry/report/ExportCommand.class</exclude>
-            <exclude>comp3607/telemetry/report/ExportRunner.class</exclude>
-            <exclude>comp3607/telemetry/report/AutosaveTimer*.class</exclude>
           </excludes>
         </configuration>
         <executions>
