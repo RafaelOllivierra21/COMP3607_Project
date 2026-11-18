@@ -14,12 +14,12 @@ import java.io.IOException;
  * Required steps are abstract, so every exporter must write them. Hooks do nothing unless a
  * subclass overrides them, so an exporter only writes the parts that make sense for its format.
  * For example the JSON writes the run summary and every event, while the PDF writes the timeline.
-
  */
-
-
-
 public abstract class AbstractExporter implements Exporter {
+
+    /** Only called by subclasses through super(), since an abstract class cannot be made directly. */
+    protected AbstractExporter() {
+    }
 
     /**
      * The template method. Makes the folder if needed, then runs every step in the fixed order
@@ -31,12 +31,6 @@ public abstract class AbstractExporter implements Exporter {
      * @return the file that was written
      * @throws IOException if any step cannot write
      */
-
-    
-    /** Only called by subclasses through super(), since an abstract class cannot be made directly. */
-    protected AbstractExporter() {
-    }
-
     @Override
     public final File export(SessionSummary summary, File folder, String name) throws IOException {
         folder.mkdirs();
