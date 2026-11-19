@@ -4,8 +4,8 @@ A student writes a small class that is correct the first time. It compiles with 
 
 ## Before you start
 
-1. Build and install the plugin (see the How to Run page) and close BlueJ completely.
-2. Start BlueJ fresh for each use case so the report only has this session in it.
+1. Build and install the plugin (see the [Setup page](https://github.com/RafaelOllivierra21/COMP3607_Project/wiki/Setup) of the wiki) and close BlueJ completely.
+2. Start BlueJ fresh for each use case so the report only has this session in it. If a step goes wrong, quit BlueJ, delete the project folder and start again. Do not delete and recreate the class in the same session.
 
 ## Steps
 
@@ -14,7 +14,7 @@ A student writes a small class that is correct the first time. It compiles with 
 3. Click New Class, name it Student, and keep Class selected.
 4. Open Student, select all the code and replace it with the code in Student.java from this folder. Close the editor.
 5. Click Compile. It compiles first time.
-6. Right click Student and choose new Student. Enter "Ana" for the name and 75 for the grade.
+6. Right click Student and choose new Student. Enter "Ana" for the name, typed with the quote marks because it is a String, and 75 for the grade.
 7. Right click the red student object and run getName, then run isPassing.
 8. Click Tools then Export telemetry report to save a snapshot.
 9. Click Project then Quit. The final report is saved as the plugin closes.

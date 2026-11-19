@@ -16,8 +16,8 @@ public class Library
 
     public void addBook(String title)
     {
-        books[count] = title;
-        count = count + 1
+        book[count] = title;
+        count = count + 1;
     }
 
     public int countBooks()

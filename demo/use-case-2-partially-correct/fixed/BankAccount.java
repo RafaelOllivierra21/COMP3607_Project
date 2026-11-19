@@ -1,6 +1,6 @@
 /**
  * A bank account that keeps a balance and tracks deposits.
- * Use case 2 after both compile mistakes are fixed. averageDeposit still
+ * Use case 2 after the compile mistake is fixed. averageDeposit still
  * crashes if it is called before any deposits, which is the runtime bug.
  */
 public class BankAccount

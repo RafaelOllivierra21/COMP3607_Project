@@ -110,3 +110,4 @@ lib/                                       bluej.jar goes here, not in Git
 - The text a program prints to the terminal is not captured, only how each run ended and any simple return value.
 - BlueJ does not give a method name for constructor runs or runs that throw an exception, so these show as `Class.unknown`.
 - BlueJ does not know who the student is, so the student ID in the reports is a placeholder.
+- New classes are found by a 5 second scan, but methods are recorded the moment a class compiles. If a class is made and compiled within the same 5 seconds, or deleted and made again, the timeline can list its methods before "Class created".

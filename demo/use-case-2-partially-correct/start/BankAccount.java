@@ -1,6 +1,6 @@
 /**
  * A bank account that keeps a balance and tracks deposits.
- * Use case 2 starting code. It has two mistakes on purpose, see STEPS.md.
+ * Use case 2 starting code. It has one compile mistake on purpose, see STEPS.md.
  */
 public class BankAccount
 {
@@ -17,7 +17,7 @@ public class BankAccount
 
     public void deposit(int amount)
     {
-        balance = balance + amount
+        balance = balance + amount;
         depositCount = depositCount + 1;
         totalDeposited = totalDeposited + amount;
     }
